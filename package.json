@@ -22,6 +22,6 @@
     "graphql-tag": "^2.10.4"
   },
   "peerDependencies": {
-    "vite": "^1.0.0-beta.11 || ^1.0.0"
+    "vite": "^2.0.0"
   }
 }
