@@ -6,9 +6,9 @@ const gql = require('graphql-tag');
 // and `doc` (the parsed GraphQL document) and tacks on
 // the imported definitions.
 function expandImports(source, doc) {
-  const lines = source.split(/\r\n|\r|\n/);
-  let outputCode =
-    `var names = {};
+    const lines = source.split(/\r\n|\r|\n/);
+    let outputCode =
+        `var names = {};
 function unique(defs) {
   return defs.filter(
     function(def) {
@@ -24,48 +24,45 @@ function unique(defs) {
   )
 }`;
 
-  lines.some((line) => {
-    if (line[0] === '#' && line.slice(1).split(' ')[0] === 'import') {
-      const importFile = line.slice(1).split(' ')[1];
-      const parseDocument = `require(${importFile})`;
-      const appendDef = `doc.definitions = doc.definitions.concat(unique(${parseDocument}.definitions));`;
-      outputCode += appendDef + os.EOL;
-    }
-    return (line.length !== 0 && line[0] !== '#');
-  });
+    lines.some((line) => {
+        if (line[0] === '#' && line.slice(1).split(' ')[0] === 'import') {
+            const importFile = line.slice(1).split(' ')[1];
+            const parseDocument = `require(${importFile})`;
+            const appendDef = `doc.definitions = doc.definitions.concat(unique(${parseDocument}.definitions));`;
+            outputCode += appendDef + os.EOL;
+        }
+        return (line.length !== 0 && line[0] !== '#');
+    });
 
-  return outputCode;
+    return outputCode;
 }
 
 const graphqlPlugin = {
-  transforms: [{
-    test({path}) {
-      return path.endsWith('.gql') || path.endsWith('.graphql');
-    },
-    async transform({code, isBuild, path}) {
-      const doc = gql`${code}`;
-      let headerCode =
-        `var doc = ${JSON.stringify(doc)};
+    async transform(code, id) {
+        if (!id.endsWith('.gql') && !id.endsWith('.graphql')) return;
+        const doc = gql`${code}`;
+        let headerCode =
+            `var doc = ${JSON.stringify(doc)};
 doc.loc.source = ${JSON.stringify(doc.loc.source)};`;
 
-      let outputCode = '';
+        let outputCode = '';
 
-      // Allow multiple query/mutation definitions in a file. This parses out dependencies
-      // at compile time, and then uses those at load time to create minimal query documents
-      // We cannot do the latter at compile time due to how the #import code works.
-      let operationCount = doc.definitions.reduce(function (accum, op) {
-        if (op.kind === 'OperationDefinition') {
-          return accum + 1;
-        }
+        // Allow multiple query/mutation definitions in a file. This parses out dependencies
+        // at compile time, and then uses those at load time to create minimal query documents
+        // We cannot do the latter at compile time due to how the #import code works.
+        let operationCount = doc.definitions.reduce(function (accum, op) {
+            if (op.kind === 'OperationDefinition') {
+                return accum + 1;
+            }
 
-        return accum;
-      }, 0);
+            return accum;
+        }, 0);
 
-      if (operationCount < 1) {
-        outputCode += '\nexport default doc;';
-      } else {
-        outputCode +=
-          `// Collect any fragment/type references from a node, adding them to the refs Set
+        if (operationCount < 1) {
+            outputCode += '\nexport default doc;';
+        } else {
+            outputCode +=
+                `// Collect any fragment/type references from a node, adding them to the refs Set
 function collectFragmentReferences(node, refs) {
   if (node.kind === "FragmentSpread") {
     refs.add(node.name.value);
@@ -150,28 +147,26 @@ function oneQuery(doc, operationName) {
 }
 export default doc;`;
 
-        for (const op of doc.definitions) {
-          if (op.kind === "OperationDefinition") {
-            if (!op.name) {
-              if (operationCount > 1) {
-                throw "Query/mutation names are required for a document with multiple definitions";
-              } else {
-                continue;
-              }
+            for (const op of doc.definitions) {
+                if (op.kind === "OperationDefinition") {
+                    if (!op.name) {
+                        if (operationCount > 1) {
+                            throw "Query/mutation names are required for a document with multiple definitions";
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    const opName = op.name.value;
+                    outputCode += `export const ${opName} = oneQuery(doc, "${opName}");`;
+                }
             }
-
-            const opName = op.name.value;
-            outputCode += `export const ${opName} = oneQuery(doc, "${opName}");`;
-          }
         }
-      }
 
-      const importOutputCode = expandImports(code, doc);
-      const allCode = headerCode + os.EOL + importOutputCode + os.EOL + outputCode + os.EOL;
-
-      return allCode;
+        const importOutputCode = expandImports(code, doc);
+        const allCode = headerCode + os.EOL + importOutputCode + os.EOL + outputCode + os.EOL;
+        return allCode;
     }
-  }]
 };
 
 module.exports = graphqlPlugin;
