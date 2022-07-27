@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-graphql-strings",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "a Vite plugin for loading GraphQL files as strings",
   "main": "index.js",
   "scripts": {},
@@ -8,7 +8,10 @@
     "type": "git",
     "url": "git+ssh://git@github.com/lunchboxer/vite-plugin-graphql-strings.git"
   },
-  "keywords": ["vite", "graphql"],
+  "keywords": [
+    "vite",
+    "graphql"
+  ],
   "prettier": {
     "semi": false,
     "singleQuote": true,
