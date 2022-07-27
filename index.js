@@ -126,7 +126,6 @@ const graphqlPluginStrings = ({ exportUpperCase = true }) => {
           const formattedName = exportUpperCase
             ? camelCaseToUpperCase(opName)
             : opName
-          console.log(formattedName)
           outputCode += `export const ${formattedName} = \`${print(
             oneQuery(document, opName),
           )}\`;`
@@ -134,7 +133,6 @@ const graphqlPluginStrings = ({ exportUpperCase = true }) => {
         }
       }
       const allCode = outputCode + os.EOL
-      // console.log(allCode)
       return allCode
     },
   }
