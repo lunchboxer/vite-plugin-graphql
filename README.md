@@ -16,9 +16,15 @@ npm i vite-plugin-graphql-strings
 const graphqlPlugin = require('vite-plugin-graphql-strings')
 
 const config = {
-  plugins: [graphqlStringsPlugin],
+  plugins: [
+    graphqlStringsPlugin({
+      exportToUpperCase: true, // default
+    }),
+  ],
 }
 ```
+
+When `exportToUpperCase` the query names conventionally written in PascalCase like `GetAllPosts` will be converted to uppercase as is the convention for Javascript constants resulting in `GET_ALL_POSTS` with the previous example.
 
 Now all the files ends with `.gql` or `.graphql` will be handled by `vite-plugin-graphql-strings`.
 

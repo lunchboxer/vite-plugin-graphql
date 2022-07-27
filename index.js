@@ -29,6 +29,10 @@ function collectFragmentReferences(node, references) {
   }
 }
 
+function camelCaseToUpperCase(name) {
+  return name.replace(/([a-z])([A-Z])/g, '$1_$2').toUpperCase()
+}
+
 function findOperation(document, name) {
   for (let index = 0; index < document.definitions.length; index++) {
     const element = document.definitions[index]
@@ -38,93 +42,101 @@ function findOperation(document, name) {
   }
 }
 
-const graphqlPluginStrings = {
-  async transform(graphqlDocument, id) {
-    if (!id.endsWith('.gql') && !id.endsWith('.graphql')) return
-    const document = gql`
-      ${graphqlDocument}
-    `
-    let outputCode = ''
-    // only support named queries and named imports
-    //
-    // no graphql imports unfortunately
-    const operationCount = document.definitions.reduce(function (accum, op) {
-      if (op.kind === 'OperationDefinition') {
-        return accum + 1
-      }
-      return accum
-    }, 0)
+const graphqlPluginStrings = ({ exportUpperCase = true }) => {
+  return {
+    name: 'graphql-strings',
+    async transform(graphqlDocument, id) {
+      if (!id.endsWith('.gql') && !id.endsWith('.graphql')) return
+      const document = gql`
+        ${graphqlDocument}
+      `
+      let outputCode = ''
+      // only support named queries and named imports
+      //
+      // no graphql imports unfortunately
+      const operationCount = document.definitions.reduce(function (accum, op) {
+        if (op.kind === 'OperationDefinition') {
+          return accum + 1
+        }
+        return accum
+      }, 0)
 
-    const definitionReferences = {}
+      const definitionReferences = {}
 
-    for (const definition of document.definitions) {
-      if (definition.name) {
-        const references = new Set()
-        collectFragmentReferences(definition, references)
-        definitionReferences[definition.name.value] = references
+      for (const definition of document.definitions) {
+        if (definition.name) {
+          const references = new Set()
+          collectFragmentReferences(definition, references)
+          definitionReferences[definition.name.value] = references
+        }
       }
-    }
 
-    function oneQuery(document, operationName) {
-      // Copy the DocumentNode, but clear out the definitions
-      const newDocument = {
-        kind: document.kind,
-        definitions: [findOperation(document, operationName)],
-      }
-      if (Object.prototype.hasOwnProperty.call(document, 'loc')) {
-        newDocument.loc = document.loc
-      }
-      // Now, for the operation we're running, find any fragments referenced by
-      // it or the fragments it references
-      const opReferences = definitionReferences[operationName] || new Set()
-      const allReferences = new Set()
-      let newReferences = new Set(opReferences)
-      while (newReferences.size > 0) {
-        const previousReferences = newReferences
-        newReferences = new Set()
-        for (const referenceName of previousReferences) {
-          if (!allReferences.has(referenceName)) {
-            allReferences.add(referenceName)
-            const childReferences =
-              definitionReferences[referenceName] || new Set()
-            for (const childReference of childReferences) {
-              newReferences.add(childReference)
+      function oneQuery(document, operationName) {
+        // Copy the DocumentNode, but clear out the definitions
+        const newDocument = {
+          kind: document.kind,
+          definitions: [findOperation(document, operationName)],
+        }
+        if (Object.prototype.hasOwnProperty.call(document, 'loc')) {
+          newDocument.loc = document.loc
+        }
+        // Now, for the operation we're running, find any fragments referenced by
+        // it or the fragments it references
+        const opReferences = definitionReferences[operationName] || new Set()
+        const allReferences = new Set()
+        let newReferences = new Set(opReferences)
+        while (newReferences.size > 0) {
+          const previousReferences = newReferences
+          newReferences = new Set()
+          for (const referenceName of previousReferences) {
+            if (!allReferences.has(referenceName)) {
+              allReferences.add(referenceName)
+              const childReferences =
+                definitionReferences[referenceName] || new Set()
+              for (const childReference of childReferences) {
+                newReferences.add(childReference)
+              }
             }
           }
         }
-      }
-      /// this is empty for somereason
-      for (const referenceName of allReferences) {
-        const op = findOperation(document, referenceName)
-        if (op) {
-          newDocument.definitions.push(op)
-        }
-      }
-      return newDocument
-    }
-
-    for (const op of document.definitions) {
-      if (op.kind === 'OperationDefinition') {
-        if (!op.name) {
-          if (operationCount > 1) {
-            throw new Error(
-              'Query/mutation names are required for a document with multiple definitions',
-            )
-          } else {
-            continue
+        /// this is empty for somereason
+        for (const referenceName of allReferences) {
+          const op = findOperation(document, referenceName)
+          if (op) {
+            newDocument.definitions.push(op)
           }
         }
-
-        const opName = op.name.value
-        outputCode += `export const ${opName} = \`${print(
-          oneQuery(document, opName),
-        )}\`;`
-        outputCode += os.EOL
+        return newDocument
       }
-    }
-    const allCode = outputCode + os.EOL
-    return allCode
-  },
-}
 
+      for (const op of document.definitions) {
+        if (op.kind === 'OperationDefinition') {
+          if (!op.name) {
+            if (operationCount > 1) {
+              throw new Error(
+                'Query/mutation names are required for a document with multiple definitions',
+              )
+            } else {
+              continue
+            }
+          }
+
+          const opName = op.name.value
+          // Javascript string constants are often in uppercase with _ word separation
+          const formattedName = exportUpperCase
+            ? camelCaseToUpperCase(opName)
+            : opName
+          console.log(formattedName)
+          outputCode += `export const ${formattedName} = \`${print(
+            oneQuery(document, opName),
+          )}\`;`
+          outputCode += os.EOL
+        }
+      }
+      const allCode = outputCode + os.EOL
+      // console.log(allCode)
+      return allCode
+    },
+  }
+}
 module.exports = graphqlPluginStrings
