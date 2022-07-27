@@ -1,27 +1,42 @@
 {
-  "name": "vite-plugin-graphql",
+  "name": "vite-plugin-graphql-strings",
   "version": "0.1.0",
-  "description": "a Vite plugin for loading GraphQL files",
+  "description": "a Vite plugin for loading GraphQL files as strings",
   "main": "index.js",
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/foisonocean/vite-plugin-graphql.git"
+    "url": "git+ssh://git@github.com/lunchboxer/vite-plugin-graphql-strings.git"
   },
-  "keywords": [
-    "vite",
-    "graphql"
-  ],
-  "author": "foisonocean <hronro@gmail.com>",
+  "keywords": ["vite", "graphql"],
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "arrowParens": "avoid"
+  },
+  "author": "lunchboxer <mrsmith@aliyun.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/foisonocean/vite-plugin-graphql/issues"
+    "url": "https://github.com/lunchboxer/vite-plugin-graphql-strings/issues"
   },
-  "homepage": "https://github.com/foisonocean/vite-plugin-graphql",
+  "homepage": "https://github.com/lunchboxer/vite-plugin-graphql-strings",
   "dependencies": {
     "graphql-tag": "^2.10.4"
   },
   "peerDependencies": {
     "vite": "^3.0.0"
+  },
+  "devDependencies": {
+    "@graphql-eslint/eslint-plugin": "^3.10.6",
+    "eslint": "^8.20.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-security": "^1.5.0",
+    "eslint-plugin-unicorn": "^43.0.2",
+    "nodemon": "^2.0.19",
+    "prettier": "^2.7.1"
   }
 }

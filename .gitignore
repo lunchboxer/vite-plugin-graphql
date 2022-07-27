@@ -32,6 +32,7 @@ $RECYCLE.BIN/
 .directory
 .Trash-*
 .nfs*
+.log
 
 # Node.js
 #
