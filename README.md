@@ -18,7 +18,7 @@ const graphqlPlugin = require('vite-plugin-graphql-strings')
 const config = {
   plugins: [
     graphqlStringsPlugin({
-      exportToUpperCase: true, // default
+      exportUpperCase: true, // default
     }),
   ],
 }

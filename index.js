@@ -42,7 +42,8 @@ function findOperation(document, name) {
   }
 }
 
-const graphqlPluginStrings = ({ exportUpperCase = true }) => {
+const graphqlPluginStrings = (options = {}) => {
+  const { exportUpperCase = true } = options
   return {
     name: 'graphql-strings',
     async transform(graphqlDocument, id) {
