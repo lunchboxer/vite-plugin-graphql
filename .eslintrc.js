@@ -15,13 +15,6 @@ module.exports = {
     node: true,
   },
   plugins: ['security'],
-  overrides: [
-    {
-      files: ['*.graphql'],
-      parser: '@graphql-eslint/eslint-plugin',
-      plugins: ['@graphql-eslint'],
-    },
-  ],
   rules: {
     'unicorn/filename-case': 0,
     'unicorn/prefer-module': 0,
